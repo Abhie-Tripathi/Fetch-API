@@ -8,6 +8,7 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [ischanged,setischanged] = useState(false)
 
   const fetchMoviesHandler = useCallback(async () => {
     setIsLoading(true);
@@ -24,7 +25,7 @@ function App() {
 
       for (const key in data){
         transformedMovies.push({
-          id:data.key,
+          id: key,
           title:data[key].title,
           openingText: data[key].openingText,
           releaseDate: data[key].releaseDate
@@ -36,7 +37,7 @@ function App() {
       setError(error.message);
     }
     setIsLoading(false);
-  }, []);
+  }, [ischanged]);
 
   useEffect(() => {
     fetchMoviesHandler();
@@ -50,12 +51,23 @@ function App() {
         "Content-Type": "application/json"
       }
     })
+    setischanged(!ischanged)
   }
 
+
+  const deleteHandler = async(id) =>{
+    await fetch("https://react-http-b7880-default-rtdb.firebaseio.com/movies.json",{
+      method:"DELETE",
+      headers:{"Content-Type":"application/json"}
+    })
+    setischanged(!ischanged)
+  }
+
+  
   let content = <p>Found no movies.</p>;
 
   if (movies.length > 0) {
-    content = <MoviesList movies={movies} />;
+    content = <MoviesList movies={movies} ondelete={deleteHandler} />;
   }
 
   if (error) {
@@ -65,6 +77,7 @@ function App() {
   if (isLoading) {
     content = <p>Loading...</p>;
   }
+
 
   return (
     <React.Fragment>
