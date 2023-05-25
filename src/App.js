@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useRef } from "react";
 
 import MoviesList from "./components/MoviesList";
 import "./App.css";
@@ -6,9 +6,17 @@ import "./App.css";
 function App() {
   const [movielist, setmovielist] = useState([]);
   const [isloading,setisloading] = useState(false)
+  const [error,seterror] =useState(null)
+  
+
   async function FetchMoviesHandler() {
+    seterror(null)
     setisloading(true)
-    const Response = await fetch("https://swapi.dev/api/films/");
+    try {
+    const Response = await fetch("https://swapi.dev/api/film/");
+    if(!Response.ok){
+      throw new Error("Something Went Wrong") 
+    }
     const data = await Response.json();
     const transformeddata = data.results.map((moviedata) => {
       return {
@@ -18,8 +26,32 @@ function App() {
         releaseDate: moviedata.release_date,
       };
     });
+    
     setmovielist(transformeddata);
+    } catch (error) {
+      setisloading(false)
+      seterror(error.message)
+      setTimeout(FetchMoviesHandler,5000)
+      
+      
+    }
+    
     setisloading(false)
+  }
+
+
+  let content = <p>Found No Movies</p>
+  
+  if(movielist.length >0){
+    content = <MoviesList movies={movielist}/>
+  }
+  if(error){
+    content = <><p>{`${error} Retrying...`}</p>
+    <button onClick={clearTimeout}>Cancel</button>
+    </>
+  }
+  if(isloading){
+    content = <p>Loading...</p>
   }
 
   return (
@@ -28,9 +60,7 @@ function App() {
         <button onClick={FetchMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-        {!isloading && <MoviesList movies={movielist} />}
-        {!isloading && movielist.length===0 && <p>Found No movies</p>}
-        {isloading && <p>Loading...</p>}
+        {content}
 
       </section>
     </React.Fragment>
